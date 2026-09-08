@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>นักเก็บดาวน้อย ฝึกพิมพ์คำศัพท์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sriracha&family=Sarabun:wght@400;500;600;700;800&family=Andika:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-top:#1b1449;
+    --sky-mid:#3a2b8f;
+    --sky-bottom:#7d5fe0;
+    --sun:#ffd166;
+    --pink:#ff6fa5;
+    --cyan:#3ddbd9;
+    --green:#3ec97a;
+    --card-bg:#fffdf7;
+    --ink:#26264d;
+    --pending:#7a7a99;
+    --wrong:#ff4d5e;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    font-family:'Sarabun',sans-serif;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255,255,255,0.5) 0px, rgba(255,255,255,0) 2px),
+      radial-gradient(circle at 80% 10%, rgba(255,255,255,0.6) 0px, rgba(255,255,255,0) 2px),
+      linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 45%, var(--sky-bottom) 100%);
+    background-size: 40px 40px, 40px 40px, 100% 100%;
+    color:var(--ink);
+    overflow-x:hidden;
+    position:relative;
+  }
+  .stars{ position:fixed; inset:0; pointer-events:none; z-index:0; }
+  .stars span{
+    position:absolute; width:4px; height:4px; background:#fff; border-radius:50%;
+    opacity:.8; animation:twinkle 2.4s ease-in-out infinite;
+  }
+  @keyframes twinkle{0%,100%{opacity:.2;transform:scale(.7);}50%{opacity:1;transform:scale(1.2);}}
+
+  .wrap{
+    position:relative; z-index:1;
+    max-width:720px; margin:0 auto; padding:24px 18px 60px;
+  }
+
+  header{ text-align:center; margin-bottom:18px; }
+  header h1{
+    font-family:'Sriracha',cursive;
+    color:#fff; font-size:clamp(22px,4vw,32px);
+    margin:0 0 4px; text-shadow:0 3px 0 rgba(0,0,0,.2);
+  }
+  header p{ color:#eae6ff; font-size:15px; margin:0; opacity:.9; }
+
+  /* ---- top status bar ---- */
+  .status-panel{
+    background:rgba(255,255,255,.12);
+    border:2px solid rgba(255,255,255,.3);
+    border-radius:20px;
+    padding:16px 18px;
+    margin-bottom:20px;
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .status-row{
+    display:flex; align-items:center; justify-content:space-between;
+    font-family:'Sarabun',sans-serif; font-weight:700; color:#fff; font-size:16px;
+  }
+  .star-count{ display:flex; align-items:center; gap:6px; font-size:18px; }
+  .progressbar{
+    width:100%; height:16px; background:rgba(255,255,255,.25); border-radius:999px; overflow:hidden;
+    border:2px solid rgba(255,255,255,.4);
+  }
+  .progressbar-fill{
+    height:100%; width:0%; border-radius:999px;
+    background:linear-gradient(90deg,var(--cyan),var(--sun));
+    transition:width .4s ease;
+  }
+
+  /* ---- main card ---- */
+  .card{
+    background:var(--card-bg);
+    border-radius:28px;
+    padding:44px 26px 34px;
+    box-shadow:0 14px 0 rgba(0,0,0,.12), 0 20px 40px rgba(0,0,0,.3);
+    position:relative;
+    text-align:center;
+    overflow:visible;
+  }
+
+  .word-display{
+    position:relative;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:4px;
+    min-height:110px;
+    margin-bottom:14px;
+    transition:transform .25s ease, opacity .25s ease;
+  }
+  .word-display.word-anim-in{ animation:wordIn .35s ease; }
+  @keyframes wordIn{
+    0%{ opacity:0; transform:scale(.7) translateY(10px); }
+    100%{ opacity:1; transform:scale(1) translateY(0); }
+  }
+  .word-display.word-complete{ animation:wordWin .6s ease; }
+  @keyframes wordWin{
+    0%{ transform:scale(1); }
+    30%{ transform:scale(1.12) rotate(-2deg); }
+    60%{ transform:scale(1.12) rotate(2deg); }
+    100%{ transform:scale(1) rotate(0); }
+  }
+
+  .char{
+    font-family:'Andika',sans-serif;
+    font-weight:700;
+    font-size:64px;
+    color:var(--pending);
+    padding:2px 6px;
+    border-radius:12px;
+    position:relative;
+    transition:color .15s ease, transform .15s ease;
+  }
+  .char.correct{ color:var(--green); }
+  .char.correct.pop{ animation:pop .35s ease; }
+  @keyframes pop{
+    0%{ transform:scale(1); }
+    40%{ transform:scale(1.35); }
+    100%{ transform:scale(1); }
+  }
+  .char.current{
+    background:var(--sun);
+    color:var(--ink);
+    box-shadow:0 0 0 4px rgba(255,209,102,.55);
+    animation:pulse 1s ease-in-out infinite;
+  }
+  .char.current.wrong{
+    background:var(--wrong) !important;
+    color:#fff !important;
+    animation:shake .3s ease;
+  }
+  @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-6px);}
+    75%{transform:translateX(6px);}
+  }
+
+  .spark{
+    position:absolute; pointer-events:none; z-index:20;
+    animation-name:sparkFly; animation-timing-function:ease-out; animation-fill-mode:forwards;
+  }
+  @keyframes sparkFly{
+    0%{ opacity:1; transform:translate(-50%,-50%) scale(.5) rotate(0deg); }
+    100%{ opacity:0; transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.3) rotate(90deg); }
+  }
+
+  .hint{
+    margin-top:8px; text-align:center; color:var(--pending); font-size:14px;
+  }
+  .hint b{ color:var(--ink); }
+
+  .letter-map{
+    margin-top:14px;
+    padding-top:12px;
+    border-top:2px dashed #e5e1f5;
+    display:flex; flex-wrap:wrap; justify-content:center; gap:8px;
+  }
+  .letter-map-label{
+    width:100%; text-align:center; font-size:13px; color:var(--pending); margin-bottom:2px;
+  }
+  .letter-chip{
+    font-family:'Andika',sans-serif;
+    display:flex; flex-direction:column; align-items:center;
+    background:#f5f3ff; border:2px solid #e0dbf7; border-radius:12px;
+    padding:4px 10px 2px;
+    min-width:34px;
+  }
+  .letter-chip .lower{ font-size:20px; font-weight:700; color:var(--ink); line-height:1.1; }
+  .letter-chip .upper{ font-size:12px; font-weight:700; color:var(--pink); line-height:1.1; }
+
+  /* ---- final overlay ---- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(15,10,40,.6);
+    display:flex; align-items:center; justify-content:center;
+    z-index:50; opacity:0; pointer-events:none; transition:opacity .25s ease;
+  }
+  .overlay.show{ opacity:1; pointer-events:auto; }
+  .overlay-card{
+    background:#fff; border-radius:26px; padding:40px 36px; text-align:center;
+    max-width:420px; width:90%;
+    box-shadow:0 20px 60px rgba(0,0,0,.4);
+    transform:translateY(20px) scale(.9); transition:transform .3s ease;
+  }
+  .overlay.show .overlay-card{ transform:translateY(0) scale(1); }
+  .overlay-emoji{ font-size:64px; margin-bottom:6px; }
+  .overlay-card h2{
+    font-family:'Sriracha',cursive; color:var(--ink); margin:0 0 8px; font-size:26px;
+  }
+  .overlay-card p{ color:var(--pending); font-size:16px; margin:0 0 22px; }
+  .next-btn{
+    font-family:'Sriracha',cursive;
+    background:linear-gradient(160deg,#ff9f43,var(--pink));
+    color:#fff; border:none; font-size:20px; padding:14px 34px; border-radius:999px;
+    cursor:pointer; box-shadow:0 5px 0 rgba(0,0,0,.2);
+    transition:transform .1s ease;
+  }
+  .next-btn:active{ transform:translateY(3px); box-shadow:0 2px 0 rgba(0,0,0,.2); }
+
+  .confetti{
+    position:absolute; top:-10px; width:10px; height:10px; border-radius:2px;
+    animation:fall linear forwards;
+  }
+  @keyframes fall{ to{ transform:translateY(500px) rotate(360deg); opacity:0; } }
+
+  @media (max-width:520px){
+    .char{ font-size:44px; }
+    .word-display{ min-height:80px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="wrap">
+  <header>
+    <h1>🌟 นักเก็บดาวน้อย ฝึกพิมพ์คำศัพท์ 🌟</h1>
+    <p>พิมพ์คำศัพท์ภาษาอังกฤษง่ายๆ ให้ครบ 30 คำ เก็บดาวให้ได้เยอะที่สุด!</p>
+  </header>
+
+  <div class="status-panel">
+    <div class="status-row">
+      <span id="wordCounter">คำที่ 1 / 30</span>
+      <span class="star-count">⭐ <span id="starCount">0</span></span>
+    </div>
+    <div class="progressbar"><div class="progressbar-fill" id="progressFill"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="word-display" id="wordDisplay"></div>
+    <div class="hint">พิมพ์ตัวอักษรที่มี <b>แถบสีเหลือง</b> ตามลำดับ ไม่ต้องกด Backspace หรือ Enter เลยจ้ะ ถ้าพิมพ์ผิดแค่ลองพิมพ์ตัวเดิมใหม่ได้เลย 😊</div>
+
+    <div class="letter-map" id="letterMap">
+      <div class="letter-map-label">ตัวพิมพ์เล็กแต่ละตัวในคำนี้ มาจากตัวพิมพ์ใหญ่ตัวไหน 👇</div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="overlay-card" id="overlayCard">
+    <div class="overlay-emoji">🏆</div>
+    <h2>สุดยอด! เก่งที่สุด!</h2>
+    <p id="overlayText">พิมพ์ครบ 30 คำแล้ว เก็บดาวได้ทั้งหมด <b id="finalStars">0</b> ดวง!</p>
+    <!-- restart button is created only when this overlay is shown, to avoid any leftover focused button -->
+  </div>
+</div>
+
+<script>
+(function(){
+  // 30 simple 4-6 letter English words, roughly easiest to slightly harder
+  const words = [
+    "book","desk","lamp","frog","milk",
+    "cake","ball","bird","fish","star",
+    "moon","rain","tree","hand","nose",
+    "apple","chair","table","mouse","horse",
+    "tiger","snake","happy","smile","water",
+    "sunny","banana","orange","yellow","rabbit"
+  ];
+
+  let currentWord = 0;
+  let currentIndex = 0;
+  let chars = [];
+  let starTotal = 0;
+  let overlayVisible = false;
+  let inputLocked = false; // locked briefly during word-complete celebration / transitions
+
+  const wordDisplay = document.getElementById('wordDisplay');
+  const letterMap = document.getElementById('letterMap');
+  const wordCounter = document.getElementById('wordCounter');
+  const starCountEl = document.getElementById('starCount');
+  const progressFill = document.getElementById('progressFill');
+  const overlay = document.getElementById('overlay');
+  const overlayCard = document.getElementById('overlayCard');
+  const finalStars = document.getElementById('finalStars');
+
+  // ---------- background stars ----------
+  function makeStars(){
+    const box = document.getElementById('stars');
+    let html = '';
+    for(let i=0;i<50;i++){
+      const top = Math.random()*100;
+      const left = Math.random()*100;
+      const delay = (Math.random()*2.4).toFixed(2);
+      const size = (Math.random()*2+2).toFixed(1);
+      html += `<span style="top:${top}%;left:${left}%;animation-delay:${delay}s;width:${size}px;height:${size}px;"></span>`;
+    }
+    box.innerHTML = html;
+  }
+
+  // ---------- sparkle burst effect ----------
+  function burstSparkles(centerX, centerY, count, big){
+    const glyphs = ['✨','⭐','💫'];
+    for(let i=0;i<count;i++){
+      const s = document.createElement('span');
+      s.className = 'spark';
+      s.textContent = glyphs[Math.floor(Math.random()*glyphs.length)];
+      const angle = Math.random()*Math.PI*2;
+      const dist = big ? (36 + Math.random()*44) : (16 + Math.random()*18);
+      const dx = Math.cos(angle)*dist;
+      const dy = Math.sin(angle)*dist;
+      s.style.left = centerX + 'px';
+      s.style.top = centerY + 'px';
+      s.style.setProperty('--dx', dx + 'px');
+      s.style.setProperty('--dy', dy + 'px');
+      s.style.fontSize = (big ? (18 + Math.random()*12) : (11 + Math.random()*7)) + 'px';
+      s.style.animationDuration = (0.45 + Math.random()*0.3) + 's';
+      wordDisplay.appendChild(s);
+      setTimeout(()=>{ s.remove(); }, 900);
+    }
+  }
+
+  function sparkleAtSpan(span, big){
+    const spanRect = span.getBoundingClientRect();
+    const containerRect = wordDisplay.getBoundingClientRect();
+    const x = spanRect.left + spanRect.width/2 - containerRect.left;
+    const y = spanRect.top + spanRect.height/2 - containerRect.top;
+    burstSparkles(x, y, big ? 14 : 6, big);
+  }
+
+  // ---------- word loading ----------
+  function loadWord(idx){
+    currentWord = idx;
+    currentIndex = 0;
+    inputLocked = false;
+    const word = words[idx];
+    chars = Array.from(word);
+
+    wordCounter.textContent = `คำที่ ${idx+1} / 30`;
+    progressFill.style.width = (idx/words.length*100) + '%';
+
+    let html = '';
+    chars.forEach((ch, i)=>{
+      const cls = ['char'];
+      if(i === 0) cls.push('current');
+      html += `<span class="${cls.join(' ')}" data-i="${i}">${ch}</span>`;
+    });
+    wordDisplay.classList.remove('word-complete');
+    wordDisplay.innerHTML = html;
+    wordDisplay.classList.remove('word-anim-in');
+    // force reflow so the animation can replay
+    void wordDisplay.offsetWidth;
+    wordDisplay.classList.add('word-anim-in');
+
+    // show which uppercase letter each lowercase letter in this word comes from
+    let mapHtml = '<div class="letter-map-label">ตัวพิมพ์เล็กแต่ละตัวในคำนี้ มาจากตัวพิมพ์ใหญ่ตัวไหน 👇</div>';
+    chars.forEach((ch)=>{
+      mapHtml += `<div class="letter-chip"><span class="lower">${ch}</span><span class="upper">${ch.toUpperCase()}</span></div>`;
+    });
+    letterMap.innerHTML = mapHtml;
+  }
+
+  function getSpan(i){
+    return wordDisplay.querySelector(`.char[data-i="${i}"]`);
+  }
+
+  function handleCorrect(){
+    const span = getSpan(currentIndex);
+    span.classList.remove('current');
+    span.classList.add('correct','pop');
+    sparkleAtSpan(span, false);
+    setTimeout(()=>span.classList.remove('pop'), 350);
+
+    currentIndex++;
+
+    if(currentIndex >= chars.length){
+      wordComplete();
+      return;
+    }
+    const next = getSpan(currentIndex);
+    next.classList.add('current');
+  }
+
+  function handleWrong(){
+    const span = getSpan(currentIndex);
+    span.classList.add('wrong');
+    setTimeout(()=>{ span.classList.remove('wrong'); }, 250);
+  }
+
+  function wordComplete(){
+    inputLocked = true;
+    starTotal++;
+    starCountEl.textContent = starTotal;
+    progressFill.style.width = ((currentWord+1)/words.length*100) + '%';
+
+    wordDisplay.classList.add('word-complete');
+    const rect = wordDisplay.getBoundingClientRect();
+    burstSparkles(rect.width/2, rect.height/2, 16, true);
+
+    const isLast = currentWord === words.length - 1;
+
+    setTimeout(()=>{
+      if(isLast){
+        showFinalOverlay();
+      } else {
+        loadWord(currentWord + 1);
+      }
+    }, 750);
+  }
+
+  // ---------- final overlay (only place with a clickable button) ----------
+  function showFinalOverlay(){
+    overlayVisible = true;
+    finalStars.textContent = starTotal;
+
+    // Build the restart button fresh each time, so no stale focused
+    // button can ever exist while the student is typing.
+    const oldBtn = overlayCard.querySelector('.next-btn');
+    if(oldBtn) oldBtn.remove();
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'next-btn';
+    btn.textContent = 'เล่นใหม่อีกครั้ง 🔄';
+    btn.addEventListener('click', ()=>{
+      btn.blur(); // release focus immediately so a later Enter press can't re-trigger it
+      overlay.classList.remove('show');
+      overlayVisible = false;
+      starTotal = 0;
+      starCountEl.textContent = '0';
+      loadWord(0);
+    });
+    overlayCard.appendChild(btn);
+
+    launchConfetti();
+    overlay.classList.add('show');
+
+    // make sure nothing else on the page is holding keyboard focus
+    if(document.activeElement && document.activeElement !== document.body){
+      document.activeElement.blur();
+    }
+  }
+
+  function launchConfetti(){
+    const colors = ['#ff6fa5','#ffd166','#3ddbd9','#3ec97a','#7d5fe0'];
+    for(let i=0;i<26;i++){
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = Math.random()*100 + '%';
+      c.style.background = colors[Math.floor(Math.random()*colors.length)];
+      c.style.animationDuration = (1.2 + Math.random()*1.2) + 's';
+      c.style.animationDelay = (Math.random()*0.4) + 's';
+      overlayCard.appendChild(c);
+      setTimeout(()=>c.remove(), 3000);
+    }
+  }
+
+  // ---------- keyboard handling ----------
+  // IMPORTANT bug fix: Enter must NEVER be allowed to trigger a click on a
+  // focused button while the student is playing. We always intercept and
+  // preventDefault() on Enter first, before any other check, so the browser's
+  // built-in "Enter activates the focused button" behaviour can't fire and
+  // accidentally restart or skip the game. The restart button itself also
+  // blurs immediately after use and only exists in the DOM on the final
+  // overlay, so there is nothing for a stray Enter to activate mid-game.
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      return; // Enter never does anything during normal play
+    }
+
+    if(overlayVisible) return;   // ignore typing while the final overlay is up
+    if(inputLocked) return;      // ignore typing during the brief win celebration
+
+    const key = e.key;
+    if(key.length !== 1) return; // ignore Shift, Backspace, Tab, arrows, etc.
+    e.preventDefault();
+
+    const expected = chars[currentIndex];
+    if(key.toLowerCase() === expected.toLowerCase()){
+      handleCorrect();
+    } else {
+      handleWrong();
+    }
+  });
+
+  // ---------- init ----------
+  makeStars();
+  loadWord(0);
+})();
+</script>
+</body>
+</html>
