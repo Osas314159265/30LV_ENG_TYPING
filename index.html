@@ -89,6 +89,9 @@
     overflow:visible;
   }
 
+  .word-display-wrap{
+    position:relative;
+  }
   .word-display{
     position:relative;
     display:flex;
@@ -141,11 +144,66 @@
     color:#fff !important;
     animation:shake .3s ease;
   }
+  .char.current.mash{
+    background:#ff9f43 !important;
+    color:#fff !important;
+    animation:shake .3s ease;
+  }
   @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
   @keyframes shake{
     0%,100%{transform:translateX(0);}
     25%{transform:translateX(-6px);}
     75%{transform:translateX(6px);}
+  }
+
+  /* ---- miss meter (mistakes before lockout) ---- */
+  .miss-meter{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    margin-top:16px;
+  }
+  .miss-meter-label{ font-size:13px; color:var(--pending); margin-right:4px; }
+  .miss-dot{
+    width:14px; height:14px; border-radius:50%;
+    background:#e5e1f5; border:2px solid #d8d2ef;
+    transition:background .2s ease, transform .2s ease, border-color .2s ease;
+  }
+  .miss-dot.filled{
+    background:var(--wrong); border-color:var(--wrong);
+    transform:scale(1.15);
+  }
+
+  /* ---- lockout overlay (over the word display only) ---- */
+  .lock-overlay{
+    position:absolute; inset:0;
+    background:rgba(24,14,54,.92);
+    border-radius:16px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:8px; padding:14px;
+    opacity:0; pointer-events:none;
+    transition:opacity .2s ease;
+    z-index:30;
+  }
+  .lock-overlay.show{ opacity:1; pointer-events:auto; }
+  .lock-icon{ font-size:38px; animation:lockShake 1.4s ease-in-out infinite; }
+  @keyframes lockShake{
+    0%,100%{ transform:rotate(0deg); }
+    10%{ transform:rotate(-8deg); }
+    20%{ transform:rotate(8deg); }
+    30%{ transform:rotate(0deg); }
+  }
+  .lock-timer{
+    font-family:'Sriracha',cursive; color:#fff; font-size:40px; line-height:1;
+  }
+  .lock-message{
+    color:#e9e3ff; font-size:14px; max-width:320px; text-align:center;
+  }
+  .lock-bar{
+    width:80%; max-width:260px; height:10px; background:rgba(255,255,255,.2);
+    border-radius:999px; overflow:hidden; border:2px solid rgba(255,255,255,.35);
+  }
+  .lock-bar-fill{
+    height:100%; width:100%; border-radius:999px;
+    background:linear-gradient(90deg,var(--wrong),var(--sun));
   }
 
   .spark{
@@ -240,8 +298,26 @@
   </div>
 
   <div class="card">
-    <div class="word-display" id="wordDisplay"></div>
-    <div class="hint">พิมพ์ตัวอักษรที่มี <b>แถบสีเหลือง</b> ตามลำดับ ไม่ต้องกด Backspace หรือ Enter เลยจ้ะ ถ้าพิมพ์ผิดแค่ลองพิมพ์ตัวเดิมใหม่ได้เลย 😊</div>
+    <div class="word-display-wrap">
+      <div class="word-display" id="wordDisplay"></div>
+      <div class="lock-overlay" id="lockOverlay">
+        <div class="lock-icon">🔒</div>
+        <div class="lock-timer" id="lockTimer">10</div>
+        <div class="lock-message" id="lockMessage">ใจเย็นๆ นะ ค่อยๆ พิมพ์ทีละตัวจะดีกว่า 💪</div>
+        <div class="lock-bar"><div class="lock-bar-fill" id="lockBarFill"></div></div>
+      </div>
+    </div>
+
+    <div class="miss-meter" id="missMeter">
+      <span class="miss-meter-label">พิมพ์ผิดหรือกดเร็วเกินไปติดกัน:</span>
+      <span class="miss-dot" data-dot="0"></span>
+      <span class="miss-dot" data-dot="1"></span>
+      <span class="miss-dot" data-dot="2"></span>
+      <span class="miss-dot" data-dot="3"></span>
+      <span class="miss-dot" data-dot="4"></span>
+    </div>
+
+    <div class="hint">พิมพ์ตัวอักษรที่มี <b>แถบสีเหลือง</b> ตามลำดับ ไม่ต้องกด Backspace หรือ Enter เลยจ้ะ ค่อยๆ พิมพ์ทีละตัวนะ ถ้าพิมพ์ผิดหรือกดเร็วเกินไปติดกันครบ 5 ครั้ง จะโดนล็อกห้ามพิมพ์ชั่วคราว 😊</div>
 
     <div class="letter-map" id="letterMap">
       <div class="letter-map-label">ตัวพิมพ์เล็กแต่ละตัวในคำนี้ มาจากตัวพิมพ์ใหญ่ตัวไหน 👇</div>
@@ -277,6 +353,25 @@
   let overlayVisible = false;
   let inputLocked = false; // locked briefly during word-complete celebration / transitions
 
+  // ---- anti-mashing / escalating lockout state ----
+  const WRONG_LIMIT = 5;         // consecutive mistakes before a lockout
+  const BASE_LOCK_SECONDS = 10;  // first lockout duration
+  const LOCK_INCREMENT = 5;      // seconds added to each subsequent lockout
+  const MASH_MS = 120;           // keystrokes closer together than this count as "too fast"
+
+  let wrongStreak = 0;      // consecutive wrong/too-fast attempts on the CURRENT letter run
+  let lockoutCount = 0;     // how many lockouts have happened this playthrough (keeps escalating)
+  let lockedOut = false;    // true while the lockout overlay is showing
+  let lastKeyTime = null;   // performance.now() of the last accepted keystroke, for speed checks
+  let lockCountdownTimer = null;
+
+  const encourageMessages = [
+    'ใจเย็นๆ นะ ค่อยๆ พิมพ์ทีละตัวจะดีกว่า 💪',
+    'พักหายใจลึกๆ แล้วลองใหม่กันนะ 🌈',
+    'มองตัวอักษรสีเหลืองให้ชัดๆ ก่อนพิมพ์นะ 👀',
+    'ไม่ต้องรีบ พิมพ์ถูกทีละตัวดีกว่ากดมั่วนะ 🙂'
+  ];
+
   const wordDisplay = document.getElementById('wordDisplay');
   const letterMap = document.getElementById('letterMap');
   const wordCounter = document.getElementById('wordCounter');
@@ -285,6 +380,11 @@
   const overlay = document.getElementById('overlay');
   const overlayCard = document.getElementById('overlayCard');
   const finalStars = document.getElementById('finalStars');
+  const missDots = document.querySelectorAll('.miss-dot');
+  const lockOverlay = document.getElementById('lockOverlay');
+  const lockTimerEl = document.getElementById('lockTimer');
+  const lockMessageEl = document.getElementById('lockMessage');
+  const lockBarFill = document.getElementById('lockBarFill');
 
   // ---------- background stars ----------
   function makeStars(){
@@ -366,7 +466,69 @@
     return wordDisplay.querySelector(`.char[data-i="${i}"]`);
   }
 
+  // ---------- anti-mashing / lockout ----------
+  function updateMissMeter(){
+    missDots.forEach((dot, i)=>{
+      dot.classList.toggle('filled', i < wrongStreak);
+    });
+  }
+
+  function registerMistake(){
+    wrongStreak++;
+    updateMissMeter();
+    if(wrongStreak >= WRONG_LIMIT){
+      triggerLockout();
+    }
+  }
+
+  function triggerLockout(){
+    lockedOut = true;
+    wrongStreak = 0;
+    updateMissMeter();
+
+    const seconds = BASE_LOCK_SECONDS + LOCK_INCREMENT * lockoutCount;
+    lockoutCount++; // escalates for the rest of this playthrough
+
+    lockTimerEl.textContent = seconds;
+    lockMessageEl.textContent = encourageMessages[Math.floor(Math.random()*encourageMessages.length)];
+    lockOverlay.classList.add('show');
+
+    // shrink the bar smoothly over the full lockout duration
+    lockBarFill.style.transition = 'none';
+    lockBarFill.style.width = '100%';
+    void lockBarFill.offsetWidth; // force reflow so the transition below actually animates
+    lockBarFill.style.transition = `width ${seconds}s linear`;
+    lockBarFill.style.width = '0%';
+
+    let remaining = seconds;
+    if(lockCountdownTimer) clearInterval(lockCountdownTimer);
+    lockCountdownTimer = setInterval(()=>{
+      remaining--;
+      if(remaining <= 0){
+        clearInterval(lockCountdownTimer);
+        lockCountdownTimer = null;
+        lockOverlay.classList.remove('show');
+        lockedOut = false;
+      } else {
+        lockTimerEl.textContent = remaining;
+      }
+    }, 1000);
+  }
+
+  function resetPenaltySystem(){
+    wrongStreak = 0;
+    lockoutCount = 0;
+    lockedOut = false;
+    lastKeyTime = null;
+    if(lockCountdownTimer){ clearInterval(lockCountdownTimer); lockCountdownTimer = null; }
+    lockOverlay.classList.remove('show');
+    updateMissMeter();
+  }
+
   function handleCorrect(){
+    wrongStreak = 0;
+    updateMissMeter();
+
     const span = getSpan(currentIndex);
     span.classList.remove('current');
     span.classList.add('correct','pop');
@@ -387,6 +549,17 @@
     const span = getSpan(currentIndex);
     span.classList.add('wrong');
     setTimeout(()=>{ span.classList.remove('wrong'); }, 250);
+    registerMistake();
+  }
+
+  function handleMash(){
+    // Too-fast or auto-repeated keystrokes don't count, even if the key
+    // happened to be correct - this stops random rapid mashing from
+    // accidentally "solving" the word.
+    const span = getSpan(currentIndex);
+    span.classList.add('mash');
+    setTimeout(()=>{ span.classList.remove('mash'); }, 250);
+    registerMistake();
   }
 
   function wordComplete(){
@@ -429,6 +602,7 @@
       overlayVisible = false;
       starTotal = 0;
       starCountEl.textContent = '0';
+      resetPenaltySystem();
       loadWord(0);
     });
     overlayCard.appendChild(btn);
@@ -472,10 +646,22 @@
 
     if(overlayVisible) return;   // ignore typing while the final overlay is up
     if(inputLocked) return;      // ignore typing during the brief win celebration
+    if(lockedOut) return;        // ignore typing while the mistake-penalty lockout is active
 
     const key = e.key;
     if(key.length !== 1) return; // ignore Shift, Backspace, Tab, arrows, etc.
     e.preventDefault();
+
+    // ---- anti-mashing: reject held-down auto-repeat and unrealistically fast keystrokes ----
+    const now = performance.now();
+    const tooFast = lastKeyTime !== null && (now - lastKeyTime) < MASH_MS;
+    const isMash = e.repeat || tooFast;
+    lastKeyTime = now;
+
+    if(isMash){
+      handleMash();
+      return;
+    }
 
     const expected = chars[currentIndex];
     if(key.toLowerCase() === expected.toLowerCase()){
