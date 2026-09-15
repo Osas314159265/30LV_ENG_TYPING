@@ -43,10 +43,10 @@
 
   .wrap{
     position:relative; z-index:1;
-    max-width:720px; margin:0 auto; padding:24px 18px 60px;
+    max-width:760px; margin:0 auto; padding:24px 18px 60px;
   }
 
-  header{ text-align:center; margin-bottom:18px; }
+  header{ text-align:center; margin-bottom:16px; }
   header h1{
     font-family:'Sriracha',cursive;
     color:#fff; font-size:clamp(22px,4vw,32px);
@@ -64,9 +64,16 @@
     display:flex; flex-direction:column; gap:10px;
   }
   .status-row{
-    display:flex; align-items:center; justify-content:space-between;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
     font-family:'Sarabun',sans-serif; font-weight:700; color:#fff; font-size:16px;
+    flex-wrap:wrap;
   }
+  .phase-tag{
+    background:var(--pink); color:#fff;
+    padding:4px 14px; border-radius:999px; font-size:14px;
+    box-shadow:0 2px 0 rgba(0,0,0,.2);
+  }
+  .phase-tag.phase2{ background:var(--cyan); color:#10303a; }
   .star-count{ display:flex; align-items:center; gap:6px; font-size:18px; }
   .progressbar{
     width:100%; height:16px; background:rgba(255,255,255,.25); border-radius:999px; overflow:hidden;
@@ -82,25 +89,23 @@
   .card{
     background:var(--card-bg);
     border-radius:28px;
-    padding:44px 26px 34px;
+    padding:40px 26px 30px;
     box-shadow:0 14px 0 rgba(0,0,0,.12), 0 20px 40px rgba(0,0,0,.3);
     position:relative;
     text-align:center;
     overflow:visible;
   }
 
-  .word-display-wrap{
-    position:relative;
-  }
+  .word-display-wrap{ position:relative; }
   .word-display{
     position:relative;
     display:flex;
     justify-content:center;
     align-items:center;
     flex-wrap:wrap;
-    gap:4px;
-    min-height:110px;
-    margin-bottom:14px;
+    gap:6px;
+    min-height:140px;
+    margin-bottom:10px;
     transition:transform .25s ease, opacity .25s ease;
   }
   .word-display.word-anim-in{ animation:wordIn .35s ease; }
@@ -119,10 +124,11 @@
   .char{
     font-family:'Andika',sans-serif;
     font-weight:700;
-    font-size:64px;
+    font-size:84px;
+    line-height:1.15;
     color:var(--pending);
-    padding:2px 6px;
-    border-radius:12px;
+    padding:2px 8px;
+    border-radius:14px;
     position:relative;
     transition:color .15s ease, transform .15s ease;
   }
@@ -136,7 +142,7 @@
   .char.current{
     background:var(--sun);
     color:var(--ink);
-    box-shadow:0 0 0 4px rgba(255,209,102,.55);
+    box-shadow:0 0 0 5px rgba(255,209,102,.55);
     animation:pulse 1s ease-in-out infinite;
   }
   .char.current.wrong{
@@ -156,10 +162,28 @@
     75%{transform:translateX(6px);}
   }
 
-  /* ---- miss meter (mistakes before lockout) ---- */
+  .spark{
+    position:absolute; pointer-events:none; z-index:20;
+    animation-name:sparkFly; animation-timing-function:ease-out; animation-fill-mode:forwards;
+  }
+  @keyframes sparkFly{
+    0%{ opacity:1; transform:translate(-50%,-50%) scale(.5) rotate(0deg); }
+    100%{ opacity:0; transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.3) rotate(90deg); }
+  }
+
+  /* ---- shift-free notice for uppercase phase ---- */
+  .caps-note{
+    display:inline-block;
+    background:#fff3d6; border:2px solid #ffe0a3; color:#8a5a00;
+    border-radius:999px; padding:5px 16px; font-size:14px; font-weight:600;
+    margin-bottom:6px;
+  }
+  .caps-note.hidden{ display:none; }
+
+  /* ---- miss meter ---- */
   .miss-meter{
     display:flex; align-items:center; justify-content:center; gap:8px;
-    margin-top:16px;
+    margin-top:14px; flex-wrap:wrap;
   }
   .miss-meter-label{ font-size:13px; color:var(--pending); margin-right:4px; }
   .miss-dot{
@@ -172,7 +196,7 @@
     transform:scale(1.15);
   }
 
-  /* ---- lockout overlay (over the word display only) ---- */
+  /* ---- lockout overlay ---- */
   .lock-overlay{
     position:absolute; inset:0;
     background:rgba(24,14,54,.92);
@@ -191,12 +215,8 @@
     20%{ transform:rotate(8deg); }
     30%{ transform:rotate(0deg); }
   }
-  .lock-timer{
-    font-family:'Sriracha',cursive; color:#fff; font-size:40px; line-height:1;
-  }
-  .lock-message{
-    color:#e9e3ff; font-size:14px; max-width:320px; text-align:center;
-  }
+  .lock-timer{ font-family:'Sriracha',cursive; color:#fff; font-size:44px; line-height:1; }
+  .lock-message{ color:#e9e3ff; font-size:14px; max-width:320px; text-align:center; }
   .lock-bar{
     width:80%; max-width:260px; height:10px; background:rgba(255,255,255,.2);
     border-radius:999px; overflow:hidden; border:2px solid rgba(255,255,255,.35);
@@ -206,20 +226,12 @@
     background:linear-gradient(90deg,var(--wrong),var(--sun));
   }
 
-  .spark{
-    position:absolute; pointer-events:none; z-index:20;
-    animation-name:sparkFly; animation-timing-function:ease-out; animation-fill-mode:forwards;
-  }
-  @keyframes sparkFly{
-    0%{ opacity:1; transform:translate(-50%,-50%) scale(.5) rotate(0deg); }
-    100%{ opacity:0; transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.3) rotate(90deg); }
-  }
-
   .hint{
-    margin-top:8px; text-align:center; color:var(--pending); font-size:14px;
+    margin-top:14px; text-align:center; color:var(--pending); font-size:14px;
   }
   .hint b{ color:var(--ink); }
 
+  /* ---- letter map ---- */
   .letter-map{
     margin-top:14px;
     padding-top:12px;
@@ -233,13 +245,13 @@
     font-family:'Andika',sans-serif;
     display:flex; flex-direction:column; align-items:center;
     background:#f5f3ff; border:2px solid #e0dbf7; border-radius:12px;
-    padding:4px 10px 2px;
-    min-width:34px;
+    padding:5px 12px 3px;
+    min-width:40px;
   }
-  .letter-chip .lower{ font-size:20px; font-weight:700; color:var(--ink); line-height:1.1; }
-  .letter-chip .upper{ font-size:12px; font-weight:700; color:var(--pink); line-height:1.1; }
+  .letter-chip .big{ font-size:26px; font-weight:700; color:var(--ink); line-height:1.1; }
+  .letter-chip .small{ font-size:15px; font-weight:700; color:var(--pink); line-height:1.1; }
 
-  /* ---- final overlay ---- */
+  /* ---- overlays (phase change + finish) ---- */
   .overlay{
     position:fixed; inset:0; background:rgba(15,10,40,.6);
     display:flex; align-items:center; justify-content:center;
@@ -247,17 +259,26 @@
   }
   .overlay.show{ opacity:1; pointer-events:auto; }
   .overlay-card{
-    background:#fff; border-radius:26px; padding:40px 36px; text-align:center;
-    max-width:420px; width:90%;
+    background:#fff; border-radius:26px; padding:38px 34px; text-align:center;
+    max-width:440px; width:90%;
     box-shadow:0 20px 60px rgba(0,0,0,.4);
     transform:translateY(20px) scale(.9); transition:transform .3s ease;
+    position:relative; overflow:hidden;
   }
   .overlay.show .overlay-card{ transform:translateY(0) scale(1); }
-  .overlay-emoji{ font-size:64px; margin-bottom:6px; }
+  .overlay-emoji{ font-size:60px; margin-bottom:6px; }
   .overlay-card h2{
-    font-family:'Sriracha',cursive; color:var(--ink); margin:0 0 8px; font-size:26px;
+    font-family:'Sriracha',cursive; color:var(--ink); margin:0 0 8px; font-size:25px;
   }
-  .overlay-card p{ color:var(--pending); font-size:16px; margin:0 0 22px; }
+  .overlay-card p{ color:var(--pending); font-size:16px; margin:0 0 20px; }
+  .sample-row{
+    display:flex; justify-content:center; gap:10px; margin-bottom:20px;
+  }
+  .sample-chip{
+    font-family:'Andika',sans-serif; font-weight:700;
+    background:#f5f3ff; border:2px solid #e0dbf7; border-radius:14px;
+    padding:8px 14px; font-size:30px; color:var(--ink);
+  }
   .next-btn{
     font-family:'Sriracha',cursive;
     background:linear-gradient(160deg,#ff9f43,var(--pink));
@@ -273,9 +294,12 @@
   }
   @keyframes fall{ to{ transform:translateY(500px) rotate(360deg); opacity:0; } }
 
-  @media (max-width:520px){
-    .char{ font-size:44px; }
-    .word-display{ min-height:80px; }
+  @media (max-width:560px){
+    .char{ font-size:54px; padding:2px 5px; }
+    .word-display{ min-height:100px; }
+  }
+  @media (max-width:380px){
+    .char{ font-size:42px; }
   }
 </style>
 </head>
@@ -286,11 +310,12 @@
 <div class="wrap">
   <header>
     <h1>🌟 นักเก็บดาวน้อย ฝึกพิมพ์คำศัพท์ 🌟</h1>
-    <p>พิมพ์คำศัพท์ภาษาอังกฤษง่ายๆ ให้ครบ 30 คำ เก็บดาวให้ได้เยอะที่สุด!</p>
+    <p>เฟส 1 ตัวพิมพ์ใหญ่ 20 คำ แล้วต่อด้วยเฟส 2 ตัวพิมพ์เล็ก 10 คำ</p>
   </header>
 
   <div class="status-panel">
     <div class="status-row">
+      <span class="phase-tag" id="phaseTag">เฟส 1 · ตัวพิมพ์ใหญ่</span>
       <span id="wordCounter">คำที่ 1 / 30</span>
       <span class="star-count">⭐ <span id="starCount">0</span></span>
     </div>
@@ -298,6 +323,8 @@
   </div>
 
   <div class="card">
+    <div class="caps-note" id="capsNote">พิมพ์ได้เลย ไม่ต้องกด Shift ตัวอักษรจะกลายเป็นตัวใหญ่ให้เอง ✨</div>
+
     <div class="word-display-wrap">
       <div class="word-display" id="wordDisplay"></div>
       <div class="lock-overlay" id="lockOverlay">
@@ -310,59 +337,64 @@
 
     <div class="miss-meter" id="missMeter">
       <span class="miss-meter-label">พิมพ์ผิดหรือกดเร็วเกินไปติดกัน:</span>
-      <span class="miss-dot" data-dot="0"></span>
-      <span class="miss-dot" data-dot="1"></span>
-      <span class="miss-dot" data-dot="2"></span>
-      <span class="miss-dot" data-dot="3"></span>
-      <span class="miss-dot" data-dot="4"></span>
+      <span class="miss-dot"></span>
+      <span class="miss-dot"></span>
+      <span class="miss-dot"></span>
+      <span class="miss-dot"></span>
+      <span class="miss-dot"></span>
     </div>
 
-    <div class="hint">พิมพ์ตัวอักษรที่มี <b>แถบสีเหลือง</b> ตามลำดับ ไม่ต้องกด Backspace หรือ Enter เลยจ้ะ ค่อยๆ พิมพ์ทีละตัวนะ ถ้าพิมพ์ผิดหรือกดเร็วเกินไปติดกันครบ 5 ครั้ง จะโดนล็อกห้ามพิมพ์ชั่วคราว 😊</div>
+    <div class="hint">พิมพ์ตัวอักษรที่มี <b>แถบสีเหลือง</b> ตามลำดับ ไม่ต้องกด Backspace หรือ Enter เลยจ้ะ ค่อยๆ พิมพ์ทีละตัวนะ ถ้าพิมพ์ผิดหรือกดรัวติดกันครบ 5 ครั้ง จะโดนล็อกห้ามพิมพ์ชั่วคราว 😊</div>
 
-    <div class="letter-map" id="letterMap">
-      <div class="letter-map-label">ตัวพิมพ์เล็กแต่ละตัวในคำนี้ มาจากตัวพิมพ์ใหญ่ตัวไหน 👇</div>
-    </div>
+    <div class="letter-map" id="letterMap"></div>
   </div>
 </div>
 
 <div class="overlay" id="overlay">
-  <div class="overlay-card" id="overlayCard">
-    <div class="overlay-emoji">🏆</div>
-    <h2>สุดยอด! เก่งที่สุด!</h2>
-    <p id="overlayText">พิมพ์ครบ 30 คำแล้ว เก็บดาวได้ทั้งหมด <b id="finalStars">0</b> ดวง!</p>
-    <!-- restart button is created only when this overlay is shown, to avoid any leftover focused button -->
-  </div>
+  <div class="overlay-card" id="overlayCard"></div>
 </div>
 
 <script>
 (function(){
-  // 30 simple 4-6 letter English words, roughly easiest to slightly harder
-  const words = [
-    "book","desk","lamp","frog","milk",
-    "cake","ball","bird","fish","star",
-    "moon","rain","tree","hand","nose",
-    "apple","chair","table","mouse","horse",
+  // ---------- word data: phase 1 = 20 uppercase, phase 2 = 10 lowercase ----------
+  const PHASE1_WORDS = [
+    "BOOK","DESK","LAMP","FROG","MILK",
+    "CAKE","BALL","BIRD","FISH","STAR",
+    "MOON","RAIN","TREE","HAND","NOSE",
+    "APPLE","CHAIR","TABLE","MOUSE","HORSE"
+  ];
+  const PHASE2_WORDS = [
     "tiger","snake","happy","smile","water",
     "sunny","banana","orange","yellow","rabbit"
   ];
 
+  // each entry keeps the exact text to display AND which phase it belongs to
+  const words = [
+    ...PHASE1_WORDS.map(w => ({ text: w, phase: 1 })),
+    ...PHASE2_WORDS.map(w => ({ text: w, phase: 2 }))
+  ];
+  const PHASE1_COUNT = PHASE1_WORDS.length; // 20
+  const TOTAL = words.length;               // 30
+
+  // ---------- game state ----------
   let currentWord = 0;
   let currentIndex = 0;
   let chars = [];
+  let currentPhase = 1;
   let starTotal = 0;
   let overlayVisible = false;
-  let inputLocked = false; // locked briefly during word-complete celebration / transitions
+  let inputLocked = false;
 
-  // ---- anti-mashing / escalating lockout state ----
-  const WRONG_LIMIT = 5;         // consecutive mistakes before a lockout
-  const BASE_LOCK_SECONDS = 10;  // first lockout duration
-  const LOCK_INCREMENT = 5;      // seconds added to each subsequent lockout
-  const MASH_MS = 120;           // keystrokes closer together than this count as "too fast"
+  // ---------- anti-mashing / escalating lockout state ----------
+  const WRONG_LIMIT = 5;
+  const BASE_LOCK_SECONDS = 10;
+  const LOCK_INCREMENT = 5;
+  const MASH_MS = 120;
 
-  let wrongStreak = 0;      // consecutive wrong/too-fast attempts on the CURRENT letter run
-  let lockoutCount = 0;     // how many lockouts have happened this playthrough (keeps escalating)
-  let lockedOut = false;    // true while the lockout overlay is showing
-  let lastKeyTime = null;   // performance.now() of the last accepted keystroke, for speed checks
+  let wrongStreak = 0;
+  let lockoutCount = 0;
+  let lockedOut = false;
+  let lastKeyTime = null;
   let lockCountdownTimer = null;
 
   const encourageMessages = [
@@ -372,19 +404,21 @@
     'ไม่ต้องรีบ พิมพ์ถูกทีละตัวดีกว่ากดมั่วนะ 🙂'
   ];
 
-  const wordDisplay = document.getElementById('wordDisplay');
-  const letterMap = document.getElementById('letterMap');
-  const wordCounter = document.getElementById('wordCounter');
-  const starCountEl = document.getElementById('starCount');
-  const progressFill = document.getElementById('progressFill');
-  const overlay = document.getElementById('overlay');
-  const overlayCard = document.getElementById('overlayCard');
-  const finalStars = document.getElementById('finalStars');
-  const missDots = document.querySelectorAll('.miss-dot');
-  const lockOverlay = document.getElementById('lockOverlay');
-  const lockTimerEl = document.getElementById('lockTimer');
+  // ---------- DOM ----------
+  const wordDisplay   = document.getElementById('wordDisplay');
+  const letterMap     = document.getElementById('letterMap');
+  const wordCounter   = document.getElementById('wordCounter');
+  const phaseTag      = document.getElementById('phaseTag');
+  const capsNote      = document.getElementById('capsNote');
+  const starCountEl   = document.getElementById('starCount');
+  const progressFill  = document.getElementById('progressFill');
+  const overlay       = document.getElementById('overlay');
+  const overlayCard   = document.getElementById('overlayCard');
+  const missDots      = document.querySelectorAll('.miss-dot');
+  const lockOverlay   = document.getElementById('lockOverlay');
+  const lockTimerEl   = document.getElementById('lockTimer');
   const lockMessageEl = document.getElementById('lockMessage');
-  const lockBarFill = document.getElementById('lockBarFill');
+  const lockBarFill   = document.getElementById('lockBarFill');
 
   // ---------- background stars ----------
   function makeStars(){
@@ -400,7 +434,7 @@
     box.innerHTML = html;
   }
 
-  // ---------- sparkle burst effect ----------
+  // ---------- sparkles ----------
   function burstSparkles(centerX, centerY, count, big){
     const glyphs = ['✨','⭐','💫'];
     for(let i=0;i<count;i++){
@@ -408,14 +442,12 @@
       s.className = 'spark';
       s.textContent = glyphs[Math.floor(Math.random()*glyphs.length)];
       const angle = Math.random()*Math.PI*2;
-      const dist = big ? (36 + Math.random()*44) : (16 + Math.random()*18);
-      const dx = Math.cos(angle)*dist;
-      const dy = Math.sin(angle)*dist;
+      const dist = big ? (40 + Math.random()*50) : (18 + Math.random()*20);
       s.style.left = centerX + 'px';
       s.style.top = centerY + 'px';
-      s.style.setProperty('--dx', dx + 'px');
-      s.style.setProperty('--dy', dy + 'px');
-      s.style.fontSize = (big ? (18 + Math.random()*12) : (11 + Math.random()*7)) + 'px';
+      s.style.setProperty('--dx', Math.cos(angle)*dist + 'px');
+      s.style.setProperty('--dy', Math.sin(angle)*dist + 'px');
+      s.style.fontSize = (big ? (20 + Math.random()*14) : (12 + Math.random()*8)) + 'px';
       s.style.animationDuration = (0.45 + Math.random()*0.3) + 's';
       wordDisplay.appendChild(s);
       setTimeout(()=>{ s.remove(); }, 900);
@@ -430,42 +462,6 @@
     burstSparkles(x, y, big ? 14 : 6, big);
   }
 
-  // ---------- word loading ----------
-  function loadWord(idx){
-    currentWord = idx;
-    currentIndex = 0;
-    inputLocked = false;
-    const word = words[idx];
-    chars = Array.from(word);
-
-    wordCounter.textContent = `คำที่ ${idx+1} / 30`;
-    progressFill.style.width = (idx/words.length*100) + '%';
-
-    let html = '';
-    chars.forEach((ch, i)=>{
-      const cls = ['char'];
-      if(i === 0) cls.push('current');
-      html += `<span class="${cls.join(' ')}" data-i="${i}">${ch}</span>`;
-    });
-    wordDisplay.classList.remove('word-complete');
-    wordDisplay.innerHTML = html;
-    wordDisplay.classList.remove('word-anim-in');
-    // force reflow so the animation can replay
-    void wordDisplay.offsetWidth;
-    wordDisplay.classList.add('word-anim-in');
-
-    // show which uppercase letter each lowercase letter in this word comes from
-    let mapHtml = '<div class="letter-map-label">ตัวพิมพ์เล็กแต่ละตัวในคำนี้ มาจากตัวพิมพ์ใหญ่ตัวไหน 👇</div>';
-    chars.forEach((ch)=>{
-      mapHtml += `<div class="letter-chip"><span class="lower">${ch}</span><span class="upper">${ch.toUpperCase()}</span></div>`;
-    });
-    letterMap.innerHTML = mapHtml;
-  }
-
-  function getSpan(i){
-    return wordDisplay.querySelector(`.char[data-i="${i}"]`);
-  }
-
   // ---------- anti-mashing / lockout ----------
   function updateMissMeter(){
     missDots.forEach((dot, i)=>{
@@ -476,9 +472,7 @@
   function registerMistake(){
     wrongStreak++;
     updateMissMeter();
-    if(wrongStreak >= WRONG_LIMIT){
-      triggerLockout();
-    }
+    if(wrongStreak >= WRONG_LIMIT) triggerLockout();
   }
 
   function triggerLockout(){
@@ -487,16 +481,15 @@
     updateMissMeter();
 
     const seconds = BASE_LOCK_SECONDS + LOCK_INCREMENT * lockoutCount;
-    lockoutCount++; // escalates for the rest of this playthrough
+    lockoutCount++; // keeps escalating across both phases for the whole playthrough
 
     lockTimerEl.textContent = seconds;
     lockMessageEl.textContent = encourageMessages[Math.floor(Math.random()*encourageMessages.length)];
     lockOverlay.classList.add('show');
 
-    // shrink the bar smoothly over the full lockout duration
     lockBarFill.style.transition = 'none';
     lockBarFill.style.width = '100%';
-    void lockBarFill.offsetWidth; // force reflow so the transition below actually animates
+    void lockBarFill.offsetWidth;
     lockBarFill.style.transition = `width ${seconds}s linear`;
     lockBarFill.style.width = '0%';
 
@@ -525,6 +518,70 @@
     updateMissMeter();
   }
 
+  // ---------- phase chrome ----------
+  function applyPhaseChrome(phase){
+    currentPhase = phase;
+    if(phase === 1){
+      phaseTag.textContent = 'เฟส 1 · ตัวพิมพ์ใหญ่';
+      phaseTag.classList.remove('phase2');
+      capsNote.classList.remove('hidden');
+    } else {
+      phaseTag.textContent = 'เฟส 2 · ตัวพิมพ์เล็ก';
+      phaseTag.classList.add('phase2');
+      capsNote.classList.add('hidden');
+    }
+  }
+
+  // ---------- word loading ----------
+  function loadWord(idx){
+    currentWord = idx;
+    currentIndex = 0;
+    inputLocked = false;
+    lastKeyTime = null; // don't penalise the first keystroke of a new word
+
+    const entry = words[idx];
+    // chars hold the letters EXACTLY as they should be displayed
+    // (uppercase in phase 1, lowercase in phase 2)
+    chars = Array.from(entry.text);
+
+    applyPhaseChrome(entry.phase);
+    wordCounter.textContent = `คำที่ ${idx+1} / ${TOTAL}`;
+    progressFill.style.width = (idx/TOTAL*100) + '%';
+
+    let html = '';
+    chars.forEach((ch, i)=>{
+      const cls = ['char'];
+      if(i === 0) cls.push('current');
+      html += `<span class="${cls.join(' ')}" data-i="${i}">${ch}</span>`;
+    });
+    wordDisplay.classList.remove('word-complete');
+    wordDisplay.innerHTML = html;
+    wordDisplay.classList.remove('word-anim-in');
+    void wordDisplay.offsetWidth;
+    wordDisplay.classList.add('word-anim-in');
+
+    renderLetterMap(entry.phase);
+  }
+
+  // shows the matching partner case for every letter in the current word
+  function renderLetterMap(phase){
+    const label = phase === 1
+      ? 'ตัวพิมพ์ใหญ่แต่ละตัวในคำนี้ เขียนเป็นตัวพิมพ์เล็กแบบไหน 👇'
+      : 'ตัวพิมพ์เล็กแต่ละตัวในคำนี้ มาจากตัวพิมพ์ใหญ่ตัวไหน 👇';
+
+    let mapHtml = `<div class="letter-map-label">${label}</div>`;
+    chars.forEach((ch)=>{
+      const partner = phase === 1 ? ch.toLowerCase() : ch.toUpperCase();
+      mapHtml += `<div class="letter-chip"><span class="big">${ch}</span><span class="small">${partner}</span></div>`;
+    });
+    letterMap.innerHTML = mapHtml;
+  }
+
+  function getSpan(i){
+    return wordDisplay.querySelector(`.char[data-i="${i}"]`);
+  }
+
+  // ---------- typing outcomes ----------
   function handleCorrect(){
     wrongStreak = 0;
     updateMissMeter();
@@ -536,123 +593,145 @@
     setTimeout(()=>span.classList.remove('pop'), 350);
 
     currentIndex++;
-
     if(currentIndex >= chars.length){
       wordComplete();
       return;
     }
-    const next = getSpan(currentIndex);
-    next.classList.add('current');
+    getSpan(currentIndex).classList.add('current');
+  }
+
+  function flashCurrent(cls){
+    const span = getSpan(currentIndex);
+    if(!span) return;
+    span.classList.add(cls);
+    setTimeout(()=>{ span.classList.remove(cls); }, 250);
   }
 
   function handleWrong(){
-    const span = getSpan(currentIndex);
-    span.classList.add('wrong');
-    setTimeout(()=>{ span.classList.remove('wrong'); }, 250);
+    flashCurrent('wrong');
     registerMistake();
   }
 
   function handleMash(){
-    // Too-fast or auto-repeated keystrokes don't count, even if the key
-    // happened to be correct - this stops random rapid mashing from
-    // accidentally "solving" the word.
-    const span = getSpan(currentIndex);
-    span.classList.add('mash');
-    setTimeout(()=>{ span.classList.remove('mash'); }, 250);
+    // Too-fast or auto-repeated keystrokes never count, even if the key was
+    // the correct one - this is what stops rapid mashing from solving a word.
+    flashCurrent('mash');
     registerMistake();
   }
 
+  // ---------- word / phase completion ----------
   function wordComplete(){
     inputLocked = true;
     starTotal++;
     starCountEl.textContent = starTotal;
-    progressFill.style.width = ((currentWord+1)/words.length*100) + '%';
+    progressFill.style.width = ((currentWord+1)/TOTAL*100) + '%';
 
     wordDisplay.classList.add('word-complete');
     const rect = wordDisplay.getBoundingClientRect();
     burstSparkles(rect.width/2, rect.height/2, 16, true);
 
-    const isLast = currentWord === words.length - 1;
+    const finishedIndex = currentWord;
+    const isLastOfAll = finishedIndex === TOTAL - 1;
+    const isLastOfPhase1 = finishedIndex === PHASE1_COUNT - 1;
 
     setTimeout(()=>{
-      if(isLast){
+      if(isLastOfAll){
         showFinalOverlay();
+      } else if(isLastOfPhase1){
+        showPhaseOverlay();
       } else {
-        loadWord(currentWord + 1);
+        loadWord(finishedIndex + 1);
       }
     }, 750);
   }
 
-  // ---------- final overlay (only place with a clickable button) ----------
-  function showFinalOverlay(){
+  // ---------- overlays ----------
+  // Buttons only ever exist while an overlay is open, and blur themselves on
+  // click, so a stray Enter during play can never activate a leftover button.
+  function buildOverlay(html, buttonLabel, onClick){
     overlayVisible = true;
-    finalStars.textContent = starTotal;
+    overlayCard.innerHTML = html;
 
-    // Build the restart button fresh each time, so no stale focused
-    // button can ever exist while the student is typing.
-    const oldBtn = overlayCard.querySelector('.next-btn');
-    if(oldBtn) oldBtn.remove();
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'next-btn';
-    btn.textContent = 'เล่นใหม่อีกครั้ง 🔄';
+    btn.textContent = buttonLabel;
     btn.addEventListener('click', ()=>{
-      btn.blur(); // release focus immediately so a later Enter press can't re-trigger it
+      btn.blur();
       overlay.classList.remove('show');
       overlayVisible = false;
-      starTotal = 0;
-      starCountEl.textContent = '0';
-      resetPenaltySystem();
-      loadWord(0);
+      overlayCard.innerHTML = '';
+      onClick();
     });
     overlayCard.appendChild(btn);
 
-    launchConfetti();
     overlay.classList.add('show');
-
-    // make sure nothing else on the page is holding keyboard focus
     if(document.activeElement && document.activeElement !== document.body){
       document.activeElement.blur();
     }
   }
 
-  function launchConfetti(){
-    const colors = ['#ff6fa5','#ffd166','#3ddbd9','#3ec97a','#7d5fe0'];
-    for(let i=0;i<26;i++){
-      const c = document.createElement('div');
-      c.className = 'confetti';
-      c.style.left = Math.random()*100 + '%';
-      c.style.background = colors[Math.floor(Math.random()*colors.length)];
-      c.style.animationDuration = (1.2 + Math.random()*1.2) + 's';
-      c.style.animationDelay = (Math.random()*0.4) + 's';
-      overlayCard.appendChild(c);
-      setTimeout(()=>c.remove(), 3000);
-    }
+  function showPhaseOverlay(){
+    launchConfettiInto();
+    buildOverlay(`
+      <div class="overlay-emoji">🎊</div>
+      <h2>จบเฟส 1 แล้ว เก่งมาก!</h2>
+      <p>พิมพ์ตัวพิมพ์ใหญ่ครบ 20 คำแล้ว<br>ต่อไปเป็น <b>เฟส 2 ตัวพิมพ์เล็ก</b> อีก 10 คำนะ</p>
+      <div class="sample-row">
+        <div class="sample-chip">A</div>
+        <div class="sample-chip">➡️</div>
+        <div class="sample-chip">a</div>
+      </div>
+    `, 'เริ่มเฟส 2 🔤', ()=>{
+      loadWord(PHASE1_COUNT);
+    });
   }
 
-  // ---------- keyboard handling ----------
-  // IMPORTANT bug fix: Enter must NEVER be allowed to trigger a click on a
-  // focused button while the student is playing. We always intercept and
-  // preventDefault() on Enter first, before any other check, so the browser's
-  // built-in "Enter activates the focused button" behaviour can't fire and
-  // accidentally restart or skip the game. The restart button itself also
-  // blurs immediately after use and only exists in the DOM on the final
-  // overlay, so there is nothing for a stray Enter to activate mid-game.
+  function showFinalOverlay(){
+    launchConfettiInto();
+    buildOverlay(`
+      <div class="overlay-emoji">🏆</div>
+      <h2>สุดยอด! เก่งที่สุด!</h2>
+      <p>พิมพ์ครบทั้ง 30 คำ ทั้งตัวพิมพ์ใหญ่และตัวพิมพ์เล็กแล้ว<br>เก็บดาวได้ทั้งหมด <b>${starTotal}</b> ดวง!</p>
+    `, 'เล่นใหม่อีกครั้ง 🔄', ()=>{
+      starTotal = 0;
+      starCountEl.textContent = '0';
+      resetPenaltySystem();
+      loadWord(0);
+    });
+  }
+
+  function launchConfettiInto(){
+    const colors = ['#ff6fa5','#ffd166','#3ddbd9','#3ec97a','#7d5fe0'];
+    setTimeout(()=>{
+      for(let i=0;i<26;i++){
+        const c = document.createElement('div');
+        c.className = 'confetti';
+        c.style.left = Math.random()*100 + '%';
+        c.style.background = colors[Math.floor(Math.random()*colors.length)];
+        c.style.animationDuration = (1.2 + Math.random()*1.2) + 's';
+        c.style.animationDelay = (Math.random()*0.4) + 's';
+        overlayCard.appendChild(c);
+        setTimeout(()=>c.remove(), 3000);
+      }
+    }, 30);
+  }
+
+  // ---------- keyboard ----------
   document.addEventListener('keydown', (e)=>{
     if(e.key === 'Enter'){
       e.preventDefault();
-      return; // Enter never does anything during normal play
+      return; // Enter is always inert during play
     }
 
-    if(overlayVisible) return;   // ignore typing while the final overlay is up
-    if(inputLocked) return;      // ignore typing during the brief win celebration
-    if(lockedOut) return;        // ignore typing while the mistake-penalty lockout is active
+    if(overlayVisible) return;
+    if(inputLocked) return;
+    if(lockedOut) return;
 
     const key = e.key;
-    if(key.length !== 1) return; // ignore Shift, Backspace, Tab, arrows, etc.
+    if(key.length !== 1) return; // Shift, Backspace, Tab, arrows, CapsLock...
     e.preventDefault();
 
-    // ---- anti-mashing: reject held-down auto-repeat and unrealistically fast keystrokes ----
     const now = performance.now();
     const tooFast = lastKeyTime !== null && (now - lastKeyTime) < MASH_MS;
     const isMash = e.repeat || tooFast;
@@ -663,6 +742,9 @@
       return;
     }
 
+    // Case-insensitive match: in phase 1 the child just presses the plain key
+    // and the uppercase letter on screen lights up - no Shift needed. Caps Lock
+    // or Shift being held is accepted too, so it can never get "stuck".
     const expected = chars[currentIndex];
     if(key.toLowerCase() === expected.toLowerCase()){
       handleCorrect();
@@ -673,6 +755,7 @@
 
   // ---------- init ----------
   makeStars();
+  updateMissMeter();
   loadWord(0);
 })();
 </script>
