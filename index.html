@@ -310,13 +310,13 @@
 <div class="wrap">
   <header>
     <h1>🌟 นักเก็บดาวน้อย ฝึกพิมพ์คำศัพท์ 🌟</h1>
-    <p>เฟส 1 ตัวพิมพ์ใหญ่ 20 คำ แล้วต่อด้วยเฟส 2 ตัวพิมพ์เล็ก 10 คำ</p>
+    <p>เฟส 1 ตัวพิมพ์ใหญ่ 20 คำ แล้วต่อด้วยเฟส 2 ตัวพิมพ์เล็ก 20 คำ</p>
   </header>
 
   <div class="status-panel">
     <div class="status-row">
       <span class="phase-tag" id="phaseTag">เฟส 1 · ตัวพิมพ์ใหญ่</span>
-      <span id="wordCounter">คำที่ 1 / 30</span>
+      <span id="wordCounter">คำที่ 1 / 40</span>
       <span class="star-count">⭐ <span id="starCount">0</span></span>
     </div>
     <div class="progressbar"><div class="progressbar-fill" id="progressFill"></div></div>
@@ -365,7 +365,9 @@
   ];
   const PHASE2_WORDS = [
     "tiger","snake","happy","smile","water",
-    "sunny","banana","orange","yellow","rabbit"
+    "sunny","banana","orange","yellow","rabbit",
+    "lion","duck","queen","farm","green",
+    "bread","mango","cloud","pencil","garden"
   ];
 
   // each entry keeps the exact text to display AND which phase it belongs to
@@ -374,7 +376,7 @@
     ...PHASE2_WORDS.map(w => ({ text: w, phase: 2 }))
   ];
   const PHASE1_COUNT = PHASE1_WORDS.length; // 20
-  const TOTAL = words.length;               // 30
+  const TOTAL = words.length;               // 40
 
   // ---------- game state ----------
   let currentWord = 0;
@@ -676,7 +678,7 @@
     buildOverlay(`
       <div class="overlay-emoji">🎊</div>
       <h2>จบเฟส 1 แล้ว เก่งมาก!</h2>
-      <p>พิมพ์ตัวพิมพ์ใหญ่ครบ 20 คำแล้ว<br>ต่อไปเป็น <b>เฟส 2 ตัวพิมพ์เล็ก</b> อีก 10 คำนะ</p>
+      <p>พิมพ์ตัวพิมพ์ใหญ่ครบ 20 คำแล้ว<br>ต่อไปเป็น <b>เฟส 2 ตัวพิมพ์เล็ก</b> อีก 20 คำนะ</p>
       <div class="sample-row">
         <div class="sample-chip">A</div>
         <div class="sample-chip">➡️</div>
@@ -692,7 +694,7 @@
     buildOverlay(`
       <div class="overlay-emoji">🏆</div>
       <h2>สุดยอด! เก่งที่สุด!</h2>
-      <p>พิมพ์ครบทั้ง 30 คำ ทั้งตัวพิมพ์ใหญ่และตัวพิมพ์เล็กแล้ว<br>เก็บดาวได้ทั้งหมด <b>${starTotal}</b> ดวง!</p>
+      <p>พิมพ์ครบทั้ง 40 คำ ทั้งตัวพิมพ์ใหญ่และตัวพิมพ์เล็กแล้ว<br>เก็บดาวได้ทั้งหมด <b>${starTotal}</b> ดวง!</p>
     `, 'เล่นใหม่อีกครั้ง 🔄', ()=>{
       starTotal = 0;
       starCountEl.textContent = '0';
