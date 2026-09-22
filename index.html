@@ -74,6 +74,7 @@
     box-shadow:0 2px 0 rgba(0,0,0,.2);
   }
   .phase-tag.phase2{ background:var(--cyan); color:#10303a; }
+  .phase-tag.phase3{ background:var(--green); color:#0a3320; }
   .star-count{ display:flex; align-items:center; gap:6px; font-size:18px; }
   .progressbar{
     width:100%; height:16px; background:rgba(255,255,255,.25); border-radius:999px; overflow:hidden;
@@ -310,13 +311,13 @@
 <div class="wrap">
   <header>
     <h1>🌟 นักเก็บดาวน้อย ฝึกพิมพ์คำศัพท์ 🌟</h1>
-    <p>เฟส 1 ตัวพิมพ์ใหญ่ 20 คำ แล้วต่อด้วยเฟส 2 ตัวพิมพ์เล็ก 20 คำ</p>
+    <p>เฟส 1 ตัวพิมพ์ใหญ่ 20 คำ · เฟส 2 ตัวพิมพ์เล็ก 20 คำ · เฟส 3 คำท้าทาย 10 คำ (ไม่มีคำใบ้)</p>
   </header>
 
   <div class="status-panel">
     <div class="status-row">
       <span class="phase-tag" id="phaseTag">เฟส 1 · ตัวพิมพ์ใหญ่</span>
-      <span id="wordCounter">คำที่ 1 / 40</span>
+      <span id="wordCounter">คำที่ 1 / 50</span>
       <span class="star-count">⭐ <span id="starCount">0</span></span>
     </div>
     <div class="progressbar"><div class="progressbar-fill" id="progressFill"></div></div>
@@ -369,14 +370,22 @@
     "lion","duck","queen","farm","green",
     "bread","mango","cloud","pencil","garden"
   ];
+  // phase 3: short (max 4 letters), lowercase, no hint chips shown below -
+  // the child has to recall the letters purely from memory.
+  const PHASE3_WORDS = [
+    "cat","dog","hat","cup","box",
+    "bag","pig","hen","jam","kite"
+  ];
 
   // each entry keeps the exact text to display AND which phase it belongs to
   const words = [
     ...PHASE1_WORDS.map(w => ({ text: w, phase: 1 })),
-    ...PHASE2_WORDS.map(w => ({ text: w, phase: 2 }))
+    ...PHASE2_WORDS.map(w => ({ text: w, phase: 2 })),
+    ...PHASE3_WORDS.map(w => ({ text: w, phase: 3 }))
   ];
   const PHASE1_COUNT = PHASE1_WORDS.length; // 20
-  const TOTAL = words.length;               // 40
+  const PHASE2_COUNT = PHASE2_WORDS.length; // 20
+  const TOTAL = words.length;               // 50
 
   // ---------- game state ----------
   let currentWord = 0;
@@ -523,13 +532,17 @@
   // ---------- phase chrome ----------
   function applyPhaseChrome(phase){
     currentPhase = phase;
+    phaseTag.classList.remove('phase2','phase3');
     if(phase === 1){
       phaseTag.textContent = 'เฟส 1 · ตัวพิมพ์ใหญ่';
-      phaseTag.classList.remove('phase2');
       capsNote.classList.remove('hidden');
-    } else {
+    } else if(phase === 2){
       phaseTag.textContent = 'เฟส 2 · ตัวพิมพ์เล็ก';
       phaseTag.classList.add('phase2');
+      capsNote.classList.add('hidden');
+    } else {
+      phaseTag.textContent = 'เฟส 3 · ท้าทายความจำ';
+      phaseTag.classList.add('phase3');
       capsNote.classList.add('hidden');
     }
   }
@@ -565,8 +578,16 @@
     renderLetterMap(entry.phase);
   }
 
-  // shows the matching partner case for every letter in the current word
+  // shows the matching partner case for every letter in the current word.
+  // Phase 3 shows nothing here on purpose - no hints, pure recall.
   function renderLetterMap(phase){
+    if(phase === 3){
+      letterMap.innerHTML = '';
+      letterMap.style.display = 'none';
+      return;
+    }
+    letterMap.style.display = '';
+
     const label = phase === 1
       ? 'ตัวพิมพ์ใหญ่แต่ละตัวในคำนี้ เขียนเป็นตัวพิมพ์เล็กแบบไหน 👇'
       : 'ตัวพิมพ์เล็กแต่ละตัวในคำนี้ มาจากตัวพิมพ์ใหญ่ตัวไหน 👇';
@@ -635,12 +656,15 @@
     const finishedIndex = currentWord;
     const isLastOfAll = finishedIndex === TOTAL - 1;
     const isLastOfPhase1 = finishedIndex === PHASE1_COUNT - 1;
+    const isLastOfPhase2 = finishedIndex === PHASE1_COUNT + PHASE2_COUNT - 1;
 
     setTimeout(()=>{
       if(isLastOfAll){
         showFinalOverlay();
       } else if(isLastOfPhase1){
-        showPhaseOverlay();
+        showPhaseOverlay(1);
+      } else if(isLastOfPhase2){
+        showPhaseOverlay(2);
       } else {
         loadWord(finishedIndex + 1);
       }
@@ -673,20 +697,30 @@
     }
   }
 
-  function showPhaseOverlay(){
+  function showPhaseOverlay(fromPhase){
     launchConfettiInto();
-    buildOverlay(`
-      <div class="overlay-emoji">🎊</div>
-      <h2>จบเฟส 1 แล้ว เก่งมาก!</h2>
-      <p>พิมพ์ตัวพิมพ์ใหญ่ครบ 20 คำแล้ว<br>ต่อไปเป็น <b>เฟส 2 ตัวพิมพ์เล็ก</b> อีก 20 คำนะ</p>
-      <div class="sample-row">
-        <div class="sample-chip">A</div>
-        <div class="sample-chip">➡️</div>
-        <div class="sample-chip">a</div>
-      </div>
-    `, 'เริ่มเฟส 2 🔤', ()=>{
-      loadWord(PHASE1_COUNT);
-    });
+    if(fromPhase === 1){
+      buildOverlay(`
+        <div class="overlay-emoji">🎊</div>
+        <h2>จบเฟส 1 แล้ว เก่งมาก!</h2>
+        <p>พิมพ์ตัวพิมพ์ใหญ่ครบ 20 คำแล้ว<br>ต่อไปเป็น <b>เฟส 2 ตัวพิมพ์เล็ก</b> อีก 20 คำนะ</p>
+        <div class="sample-row">
+          <div class="sample-chip">A</div>
+          <div class="sample-chip">➡️</div>
+          <div class="sample-chip">a</div>
+        </div>
+      `, 'เริ่มเฟส 2 🔤', ()=>{
+        loadWord(PHASE1_COUNT);
+      });
+    } else {
+      buildOverlay(`
+        <div class="overlay-emoji">🕵️</div>
+        <h2>จบเฟส 2 แล้ว เก่งมาก!</h2>
+        <p>ต่อไปเป็น <b>เฟส 3 คำท้าทาย</b> อีก 10 คำ<br>รอบนี้จะไม่มีตัวช่วยบอกตัวพิมพ์ใหญ่-เล็กให้แล้วนะ ลองอาศัยความจำดู 💪</p>
+      `, 'เริ่มเฟส 3 🧠', ()=>{
+        loadWord(PHASE1_COUNT + PHASE2_COUNT);
+      });
+    }
   }
 
   function showFinalOverlay(){
@@ -694,7 +728,7 @@
     buildOverlay(`
       <div class="overlay-emoji">🏆</div>
       <h2>สุดยอด! เก่งที่สุด!</h2>
-      <p>พิมพ์ครบทั้ง 40 คำ ทั้งตัวพิมพ์ใหญ่และตัวพิมพ์เล็กแล้ว<br>เก็บดาวได้ทั้งหมด <b>${starTotal}</b> ดวง!</p>
+      <p>พิมพ์ครบทั้ง ${TOTAL} คำ ครบทั้ง 3 เฟสแล้ว<br>เก็บดาวได้ทั้งหมด <b>${starTotal}</b> ดวง!</p>
     `, 'เล่นใหม่อีกครั้ง 🔄', ()=>{
       starTotal = 0;
       starCountEl.textContent = '0';
